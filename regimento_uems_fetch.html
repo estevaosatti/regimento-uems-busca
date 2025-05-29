@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Regimento Interno UEMS - Busca via JSON</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    input[type="text"], button {
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+    input[type="text"] {
+      width: 300px;
+    }
+    p {
+      margin: 10px 0;
+      padding: 6px;
+      border-left: 5px solid blue;
+      background: #eef6ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Regimento Interno - UEMS</h1>
+  <input type="text" id="searchInput" placeholder="Digite um tema para buscar...">
+  <button onclick="exportResults()">Exportar Resultados</button>
+  <div id="results"></div>
+
+  <script>
+    let allParagraphs = [];
+
+    const removerAcentos = str => str.normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+    fetch('regimento_paragrafos.json')
+      .then(response => response.json())
+      .then(data => {
+        allParagraphs = data;
+      });
+
+    const input = document.getElementById("searchInput");
+    const resultsDiv = document.getElementById("results");
+
+    input.addEventListener("input", () => {
+      const term = removerAcentos(input.value.trim().toLowerCase());
+      resultsDiv.innerHTML = "";
+
+      if (!term) return;
+
+      const filtered = allParagraphs.filter(p =>
+        removerAcentos(p.toLowerCase()).includes(term)
+      );
+
+      filtered.forEach(p => {
+        const el = document.createElement("p");
+        el.textContent = p;
+        resultsDiv.appendChild(el);
+      });
+    });
+
+    function exportResults() {
+      const term = removerAcentos(input.value.trim().toLowerCase());
+      const filtered = allParagraphs.filter(p =>
+        removerAcentos(p.toLowerCase()).includes(term)
+      );
+
+      if (filtered.length === 0) {
+        alert("Nenhum resultado encontrado para exportar.");
+        return;
+      }
+
+      const blob = new Blob([filtered.join("\n\n")], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "resultados_busca_regimento.txt";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
